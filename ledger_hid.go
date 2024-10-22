@@ -42,6 +42,7 @@ type LedgerDeviceHID struct {
 	device      *hid.Device
 	readCo      *sync.Once
 	readChannel chan []byte
+	outChannel  chan struct{}
 }
 
 // list of supported product ids as well as their corresponding interfaces
@@ -114,6 +115,7 @@ func newDevice(dev *hid.Device) *LedgerDeviceHID {
 		device:      dev,
 		readCo:      new(sync.Once),
 		readChannel: make(chan []byte),
+		outChannel:  make(chan struct{}),
 	}
 }
 
@@ -170,11 +172,19 @@ func (ledger *LedgerDeviceHID) readThread() {
 	defer close(ledger.readChannel)
 
 	for {
+		select {
+		case <-ledger.outChannel:
+			return
+		default:
+			//do other
+		}
+
 		buffer := make([]byte, PacketSize)
 		readBytes, err := ledger.device.Read(buffer)
 
 		// Check for HID Read Error (May occur even during normal runtime)
 		if err != nil {
+			time.Sleep(time.Millisecond * 1)
 			continue
 		}
 
@@ -262,5 +272,6 @@ func (ledger *LedgerDeviceHID) Exchange(command []byte) ([]byte, error) {
 }
 
 func (ledger *LedgerDeviceHID) Close() error {
+	ledger.outChannel <- struct{}{}
 	return ledger.device.Close()
 }
