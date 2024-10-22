@@ -115,7 +115,7 @@ func newDevice(dev *hid.Device) *LedgerDeviceHID {
 		device:      dev,
 		readCo:      new(sync.Once),
 		readChannel: make(chan []byte),
-		outChannel:  make(chan struct{}),
+		outChannel:  make(chan struct{}, 1),
 	}
 }
 
