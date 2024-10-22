@@ -272,6 +272,7 @@ func (ledger *LedgerDeviceHID) Exchange(command []byte) ([]byte, error) {
 }
 
 func (ledger *LedgerDeviceHID) Close() error {
+	err := ledger.device.Close()
 	ledger.outChannel <- struct{}{}
-	return ledger.device.Close()
+	return err
 }
